@@ -10,6 +10,10 @@ document.addEventListener('DOMContentLoaded', () => {
   sendBtn.addEventListener('click', sendMessage);
   testBtn.addEventListener('click', testConnection);
 
+  const summarizeBtn = document.getElementById('summarizeBtn');
+  summarizeBtn.addEventListener('click', summarizePage);
+
+
   messageInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') sendMessage();
   });
@@ -93,6 +97,30 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  async function summarizePage() {
+    addMessage('user', 'Summarize this page');
+
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+      const pageInfo = await chrome.tabs.sendMessage(tab.id, {
+        type: 'ANALYZE_PAGE'
+      });
+
+      const response = await chrome.runtime.sendMessage({
+        type: 'SUMMARIZE_PAGE',
+        data: pageInfo
+      });
+
+      if (response && response.success) {
+        addMessage('assistant', response.message);
+      } else {
+        addMessage('error', response?.error || 'Failed to summarize page');
+      }
+    } catch (err) {
+      addMessage('error', 'Summarization error: ' + err.message);
+    }
+  }
   async function testConnection() {
     const originalText = testBtn.textContent;
     testBtn.textContent = '🟡';

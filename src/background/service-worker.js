@@ -1,4 +1,6 @@
-// Little Giant AI - Enhanced Service Worker
+import { summarizePage } from './summarizer.js';
+
+// Little Giant AI - WORKING Service Worker
 console.log('🏔️ Service Worker Started');
 
 // Global state
@@ -110,6 +112,13 @@ function handleMessage(message, sender, sendResponse) {
       console.log('🔍 Debug test received');
       sendResponse({ success: true, message: 'Service worker responding!' });
       return false;
+
+    case 'SUMMARIZE_PAGE':
+     summarizePage(message.data, aiProvider)
+    .then(result => sendResponse(result))
+    .catch(error => sendResponse({ success: false, error: error.message }));
+     return true;
+
 
     default:
       sendResponse({ success: false, error: 'Unknown message type' });

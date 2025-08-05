@@ -1,15 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <title>A.A.S.A</title>
   <link rel="stylesheet" href="sidepanel.css">
 </head>
+
 <body class="dark-mode">
   <header>
     <h2>A.A.S.A <span id="status-dot">⚪</span></h2>
     <div class="header-buttons">
-      <button id="testBtn" title="Test Connection">🔌</button>
+      <button id="testBtn" title="Test AI connection">
+        Connection<span id="status-dot"></span>
+      </button>
+      <button id="summarizeBtn" title="Summarize current tab">
+        Summarize
+      </button>
+
     </div>
   </header>
   <main id="main-content">
@@ -23,4 +31,5 @@
   </main>
   <script src="sidepanel.js"></script>
 </body>
+
 </html>

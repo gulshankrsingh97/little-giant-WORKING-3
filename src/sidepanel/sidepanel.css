@@ -272,3 +272,25 @@ body.dark-mode #sendBtn:hover {
 body.dark-mode #sendBtn:disabled {
   opacity: 0.4;
 }
+
+#summarizeBtn {
+  background: none;
+  border: none;
+  color: #333;
+  padding: 4px 8px;
+  margin-left: 8px;
+  cursor: pointer;
+}
+
+#summarizeBtn:hover {
+  background: #e0e0e0;
+  border-radius: 4px;
+}
+
+body.dark-mode #summarizeBtn {
+  color: #ccc;
+}
+
+body.dark-mode #summarizeBtn:hover {
+  background: #333;
+}
