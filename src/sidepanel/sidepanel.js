@@ -55,7 +55,34 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
           case 'click':
           case 'type':
-          case 'search':
+          case '#websearch':
+              chrome.runtime.sendMessage({
+              type: 'OPEN_URL',
+              url: intent.url
+            }, async (response) => {
+              addMessage('assistant', `Opening ${intent.url}...`);
+              if (response && response.tabId && (intent.value || intent.target)) {
+                // Ideally, wait for navigation and then send perform-action message
+                // For now, the user should issue a follow-up command when ready
+                // Could enhance with tabUpdate listener for ready state
+              }
+              status.textContent = '🟢';
+            });
+            return;
+          case '#images':
+             chrome.runtime.sendMessage({
+              type: 'OPEN_URL',
+              url: intent.url
+            }, async (response) => {
+              addMessage('assistant', `Opening ${intent.url}...`);
+              if (response && response.tabId && (intent.value || intent.target)) {
+                // Ideally, wait for navigation and then send perform-action message
+                // For now, the user should issue a follow-up command when ready
+                // Could enhance with tabUpdate listener for ready state
+              }
+              status.textContent = '🟢';
+            });
+            return;
           case 'scroll': {
             // Perform direct page action
             const actionResponse = await chrome.runtime.sendMessage({

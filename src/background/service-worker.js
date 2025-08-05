@@ -140,11 +140,14 @@ Available actions:
 - "search": Enter a search into a search field
 - "scroll": Scroll the page or to an element
 - "chat": Conversation only, no web action
+- "#images" : returns a google image search url like https://www.google.com/search?q=<user_query>
+- "#websearch": returns a google serach url like https://www.google.com/search?q=<user_query>
+- "#youtube": returns a youtube url like http://www.youtube.com/results?search_query=<user_query>
 
 RESPONSE FORMAT:
 {
-  "action": "click" | "type" | "search" | "scroll" | "navigate" | "chat",
-  "url": "full URL with https://" or null,
+  "action": "click" | "type" | "search" | "scroll" | "navigate" | "chat" | "#images" | "#websearch",
+  "url": "full site URL  or google serach url with  https:// in case of #images and #websearch",
   "target": "Descriptive text or selector of element, if relevant, else null",
   "value": "Text to type or search, else null",
   "reasoning": "brief explanation"
@@ -157,6 +160,9 @@ Examples:
 - "type my email": {"action": "type", "url": null, "target": "email input box", "value": "my@email.com", "reasoning": "user wants to type their email"}
 - "scroll to bottom": {"action": "scroll", "url": null, "target": "bottom of page", "value": null, "reasoning": "user wants to scroll down"}
 - "what is the weather?": {"action": "chat", "url": null, "target": null, "value": null, "reasoning": "conversation"}
+- "#websearch for flowers " -> {"action": "#websearch", "url": "https://www.google.com/search?q=flowers, "reasoning": "user asking for flowers on web"}
+- "flower images" ->  {"action": "#websearch", "url": "https://www.google.com/search?q=flowers, "reasoning": "user asking for images on web"}
+- "#youtube videos for nature" ->  {"action": "#websearch", "url": "https://www.youtube.com/results?search_query=nature+videos, "reasoning": "user asking for videos on web"}
 
 User message: "${userMessage}"
 `;
