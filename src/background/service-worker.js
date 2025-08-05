@@ -142,11 +142,11 @@ Available actions:
 - "chat": Conversation only, no web action
 - "#images" : returns a google image search url like https://www.google.com/search?q=<user_query>
 - "#websearch": returns a google serach url like https://www.google.com/search?q=<user_query>
-- "#youtube": returns a youtube url like http://www.youtube.com/results?search_query=<user_query>
+- "#videos": returns a youtube url like http://www.youtube.com/results?search_query=<user_query>
 
 RESPONSE FORMAT:
 {
-  "action": "click" | "type" | "search" | "scroll" | "navigate" | "chat" | "#images" | "#websearch",
+  "action": "click" | "type" | "search" | "scroll" | "navigate" | "chat" | "#images" | "#websearch" | "#videos",
   "url": "full site URL  or google serach url with  https:// in case of #images and #websearch",
   "target": "Descriptive text or selector of element, if relevant, else null",
   "value": "Text to type or search, else null",
@@ -162,7 +162,8 @@ Examples:
 - "what is the weather?": {"action": "chat", "url": null, "target": null, "value": null, "reasoning": "conversation"}
 - "#websearch for flowers " -> {"action": "#websearch", "url": "https://www.google.com/search?q=flowers, "reasoning": "user asking for flowers on web"}
 - "flower images" ->  {"action": "#websearch", "url": "https://www.google.com/search?q=flowers, "reasoning": "user asking for images on web"}
-- "#youtube videos for nature" ->  {"action": "#websearch", "url": "https://www.youtube.com/results?search_query=nature+videos, "reasoning": "user asking for videos on web"}
+- "#Videos nature" ->  {"action": "#videos", "url": "https://www.youtube.com/results?search_query=nature+videos, "reasoning": "user asking for videos on web"}
+- "#Videos eternally,i love you by k.k" ->  {"action": "#videos", "url": "https://www.youtube.com/results?search_query=eternally,+i+love+you+by+k.k, "reasoning": "user asking for videos on web"}
 
 User message: "${userMessage}"
 `;
