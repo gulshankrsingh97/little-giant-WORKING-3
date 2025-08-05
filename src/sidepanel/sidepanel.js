@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const testBtn = document.getElementById('testBtn');
   const messages = document.getElementById('messages');
   const status = document.getElementById('status-dot');
+  document.body.classList.add('dark-mode');
 
     // Reset to default dot style initially
   status.textContent = '⚪';

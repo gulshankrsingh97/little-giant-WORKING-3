@@ -4,11 +4,33 @@ html, body {
   margin: 0;
   padding: 0;
 }
+
 body {
   display: flex;
   flex-direction: column;
   font-family: sans-serif;
   background: #ffffff;
+  color: #000;
+}
+
+/* Dark mode base */
+body.dark-mode {
+  background: #121212;
+  color: #e0e0e0;
+}
+
+/* Scrollbars */
+body.dark-mode ::-webkit-scrollbar {
+  width: 8px;
+}
+
+body.dark-mode ::-webkit-scrollbar-track {
+  background: #1e1e1e;
+}
+
+body.dark-mode ::-webkit-scrollbar-thumb {
+  background-color: #555;
+  border-radius: 4px;
 }
 
 /* Header styling */
@@ -19,12 +41,15 @@ header {
   padding: 8px 12px;
   background: #f1f1f1;
   border-bottom: 1px solid #ccc;
+  color: #000;
 }
+
 header h2 {
   margin: 0;
   font-size: 16px;
   font-weight: 600;
 }
+
 .header-buttons button {
   background: none;
   border: none;
@@ -33,10 +58,32 @@ header h2 {
   margin-left: 8px;
   cursor: pointer;
 }
+
 .header-buttons button:hover {
   background: #e0e0e0;
   border-radius: 4px;
 }
+
+/* Header dark mode */
+body.dark-mode header {
+  background: #1f1f1f;
+  border-bottom: 1px solid #444;
+  color: #eee;
+}
+
+body.dark-mode header h2 {
+  color: #eee;
+}
+
+body.dark-mode .header-buttons button {
+  color: #ccc;
+}
+
+body.dark-mode .header-buttons button:hover {
+  background: #333;
+}
+
+/* Status dot (circular indicator) */
 #status-dot {
   display: inline-block;
   width: 20px;
@@ -44,35 +91,57 @@ header h2 {
   margin-left: 5px;
   vertical-align: middle;
   border-radius: 50%;
+  border: 1px solid #999;
+  background: #bbb; /* light gray by default */
+}
+
+/* Status dot dark mode */
+body.dark-mode #status-dot {
+  border: 1px solid #555;
+  background: #666; /* darker gray */
 }
 
 /* Main content area */
 #main-content {
   flex: 1;
   position: relative;
+  background: transparent;
 }
+
 .chat-view, .history-view {
-  /* Fill the main content area */
   height: 100%;
   width: 100%;
   overflow-y: auto;
   padding: 8px;
+  color: inherit;
+  background: transparent;
 }
+
 .chat-view {
   display: flex;
   flex-direction: column;
 }
+
 .history-view ul {
   list-style: none;
   margin: 0;
   padding: 0;
 }
+
 .history-view li {
   padding: 6px;
   cursor: pointer;
+  color: inherit;
 }
+
 .history-view li:hover {
   background: #eee;
+  color: inherit;
+}
+
+/* History dark mode hover */
+body.dark-mode .history-view li:hover {
+  background: #333;
 }
 
 /* Chat message bubbles */
@@ -83,20 +152,46 @@ header h2 {
   border-radius: 8px;
   white-space: pre-wrap;
   word-wrap: break-word;
+  color: inherit;
 }
+
+/* User message light mode */
 .user-message {
   align-self: flex-end;
   background: #0078D7;
   color: #fff;
 }
+
+/* User message dark mode */
+body.dark-mode .user-message {
+  background: #005a9e;
+  color: #fff;
+}
+
+/* AI message light mode */
 .ai-message {
   align-self: flex-start;
   background: #e5e5ea;
   color: #000;
 }
+
+/* AI message dark mode */
+body.dark-mode .ai-message {
+  background: #2a2a2e;
+  color: #ddd;
+}
+
+/* Pending message */
 .pending {
   opacity: 0.6;
   font-style: italic;
+  color: inherit;
+}
+
+/* Pending message dark mode override */
+body.dark-mode .pending {
+  opacity: 0.7;
+  color: #bbb;
 }
 
 /* Input bar at bottom */
@@ -105,19 +200,45 @@ header h2 {
   align-items: center;
   padding: 8px;
   border-top: 1px solid #ccc;
+  background: #fafafa;
 }
+
+/* Input bar dark mode */
+body.dark-mode #inputbar {
+  border-top: 1px solid #333;
+  background: #1f1f1f;
+}
+
+/* Input field */
 #messageInput {
   flex: 1;
   padding: 6px 8px;
   font-size: 14px;
   border: 1px solid #ccc;
   border-radius: 4px;
+  color: #000;
+  background: #fff;
 }
+
 #messageInput:focus {
   outline: none;
   border-color: #0078D7;
   box-shadow: 0 0 2px #0078D7;
 }
+
+/* Input field dark mode */
+body.dark-mode #messageInput {
+  color: #eee;
+  background: #121212;
+  border: 1px solid #444;
+}
+
+body.dark-mode #messageInput:focus {
+  border-color: #3399ff;
+  box-shadow: 0 0 4px #3399ff;
+}
+
+/* Send button */
 #sendBtn {
   margin-left: 8px;
   padding: 6px 12px;
@@ -128,10 +249,26 @@ header h2 {
   color: #fff;
   cursor: pointer;
 }
+
 #sendBtn:hover {
   background: #006bbd;
 }
+
 #sendBtn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* Send button dark mode */
+body.dark-mode #sendBtn {
+  background: #0078d7;
+  color: #fff;
+}
+
+body.dark-mode #sendBtn:hover {
+  background: #005ea2;
+}
+
+body.dark-mode #sendBtn:disabled {
+  opacity: 0.4;
 }
