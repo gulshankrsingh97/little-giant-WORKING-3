@@ -1,11 +1,10 @@
-// Little Giant AI - WORKING Service Worker
+// Little Giant AI - Enhanced Service Worker
 console.log('🏔️ Service Worker Started');
 
 // Global state
 let aiProvider = null;
 let isInitialized = false;
 
-// Register listeners immediately (synchronously)
 chrome.runtime.onInstalled.addListener(() => {
   chrome.sidePanel.setPanelBehavior({
     openPanelOnActionClick: true
@@ -13,14 +12,12 @@ chrome.runtime.onInstalled.addListener(() => {
 });
 
 chrome.action.onClicked.addListener(() => {
-  chrome.sidePanel.open(); // explicitly open the side panel
+  chrome.sidePanel.open();
 });
 
-// SINGLE message listener that handles everything
 chrome.runtime.onMessage.addListener(handleMessage);
 chrome.alarms.onAlarm.addListener(handleAlarm);
 
-// Lifecycle events
 self.addEventListener('install', (event) => {
   console.log('📦 Installing...');
   self.skipWaiting();
@@ -31,10 +28,8 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(initialize());
 });
 
-// Initialize extension
 async function initialize() {
   try {
-    // Set default settings
     const stored = await chrome.storage.sync.get(['settings']);
     if (!stored.settings) {
       await chrome.storage.sync.set({
@@ -45,8 +40,6 @@ async function initialize() {
       });
       console.log('✅ Default settings saved');
     }
-
-    // Initialize AI provider
     await initializeAI();
     isInitialized = true;
     console.log('🎯 Extension initialized');
@@ -55,7 +48,6 @@ async function initialize() {
   }
 }
 
-// Initialize AI provider
 async function initializeAI() {
   try {
     const { settings } = await chrome.storage.sync.get(['settings']);
@@ -66,7 +58,7 @@ async function initializeAI() {
   }
 }
 
-// Message handler (NOT async) - HANDLES ALL MESSAGES
+// Updated: General-purpose handler for multi-step & multi-action AI
 function handleMessage(message, sender, sendResponse) {
   console.log('📨 Message:', message.type);
 
@@ -76,22 +68,26 @@ function handleMessage(message, sender, sendResponse) {
         .then(result => sendResponse({ success: true, intent: result }))
         .catch(error => {
           console.error('Classification error:', error);
-          // Return chat intent as fallback
-          sendResponse({ 
-            success: true, 
-            intent: { action: 'chat', url: null, reasoning: 'classification failed' }
+          sendResponse({
+            success: true,
+            intent: { action: 'chat', url: null, target: null, value: null, reasoning: 'classification failed' }
           });
         });
+      return true;
+
+    case 'PERFORM_ACTION':
+      handlePerformAction(message.data)
+        .then(result => sendResponse(result))
+        .catch(error => sendResponse({ success: false, error: error.message }));
       return true;
 
     case 'OPEN_URL':
       if (message.url) {
         chrome.tabs.create({ url: message.url }, (tab) => {
           if (chrome.runtime.lastError) {
-            console.error('Error opening tab:', chrome.runtime.lastError);
             sendResponse({ success: false, error: chrome.runtime.lastError.message });
           } else {
-            sendResponse({ success: true });
+            sendResponse({ success: true, tabId: tab.id });
           }
         });
         return true;
@@ -102,7 +98,7 @@ function handleMessage(message, sender, sendResponse) {
       handleChat(message.data)
         .then(result => sendResponse(result))
         .catch(error => sendResponse({ success: false, error: error.message }));
-      return true; // Keep channel open
+      return true;
 
     case 'TEST_CONNECTION':
       testConnection()
@@ -113,7 +109,7 @@ function handleMessage(message, sender, sendResponse) {
     case 'DEBUG_TEST':
       console.log('🔍 Debug test received');
       sendResponse({ success: true, message: 'Service worker responding!' });
-      return false; // Sync response
+      return false;
 
     default:
       sendResponse({ success: false, error: 'Unknown message type' });
@@ -121,59 +117,66 @@ function handleMessage(message, sender, sendResponse) {
   }
 }
 
-// AI Intent Classification Function
+// Enhanced prompt and parsing for multi-action support
 async function classifyIntent(userMessage) {
   const classificationPrompt = `
-Analyze this user message and determine if they want to:
-1. Open a website/URL 
-2. Have a normal chat conversation
+Analyze this user message and classify the action to be performed on a web page or in a conversation.
 
-User message: "${userMessage}"
+Respond ONLY with a valid JSON object (no code block marks or explanations).
 
-Respond with ONLY a JSON object in this exact format, NO explanations or code block marks or any invalid json.”
+Available actions:
+- "navigate": Open a web page or URL
+- "click": Click a button, link, or page element
+- "type": Type into a text box or form
+- "search": Enter a search into a search field
+- "scroll": Scroll the page or to an element
+- "chat": Conversation only, no web action
+
+RESPONSE FORMAT:
 {
-  "action": "open_website" or "chat",
+  "action": "click" | "type" | "search" | "scroll" | "navigate" | "chat",
   "url": "full URL with https://" or null,
+  "target": "Descriptive text or selector of element, if relevant, else null",
+  "value": "Text to type or search, else null",
   "reasoning": "brief explanation"
 }
 
 Examples:
-- "open amazon" -> {"action": "open_website", "url": "https://www.amazon.com", "reasoning": "user wants to open Amazon"}
-- "go to youtube" -> {"action": "open_website", "url": "https://www.youtube.com", "reasoning": "user wants to open YouTube"}  
-- "what is the weather" -> {"action": "chat", "url": null, "reasoning": "user asking for information"}
+- "open amazon": {"action": "navigate", "url": "https://www.amazon.com", "target": null, "value": null, "reasoning": "user wants to open Amazon"}
+- "search for cats on youtube": {"action": "search", "url": null, "target": "YouTube search box", "value": "cats", "reasoning": "user wants to search for cats on YouTube"}
+- "click login button": {"action": "click", "url": null, "target": "button labeled login", "value": null, "reasoning": "user wants to click login"}
+- "type my email": {"action": "type", "url": null, "target": "email input box", "value": "my@email.com", "reasoning": "user wants to type their email"}
+- "scroll to bottom": {"action": "scroll", "url": null, "target": "bottom of page", "value": null, "reasoning": "user wants to scroll down"}
+- "what is the weather?": {"action": "chat", "url": null, "target": null, "value": null, "reasoning": "conversation"}
+
+User message: "${userMessage}"
 `;
 
   try {
     if (!aiProvider) {
       await initializeAI();
     }
-
     if (!aiProvider) {
-      return { action: 'chat', url: null, reasoning: 'AI provider not available' };
+      return { action: 'chat', url: null, target: null, value: null, reasoning: 'AI provider not available' };
     }
-
-    // Use your existing chat method
     const messages = [{ role: 'user', content: classificationPrompt }];
     const response = await aiProvider.chat(messages);
-
-    console.log(response);
-    
-    // Parse the JSON response from AI
-    const regex = /```json\s*([\s\S]*?)\s*```/;
-    const match = response.content.trim().match(regex);
-
-    const jsonString = match ? match[1] : null;
+    // Extract JSON (strip code block marks, if any)
+    let jsonString = response.content.trim();
+    if (jsonString.startsWith('```json')) {
+      jsonString = jsonString.replace(/^```json/, '').replace(/```$/, '').trim();
+    } else if (jsonString.startsWith('```')) {
+      jsonString = jsonString.replace(/^```/, '').replace(/```$/, '').trim();
+    }
     const intent = JSON.parse(jsonString);
-    console.log(intent);
-
-    
     return intent;
   } catch (error) {
     console.error('Intent classification failed:', error);
-    // Default to chat if classification fails
     return {
       action: 'chat',
       url: null,
+      target: null,
+      value: null,
       reasoning: 'classification failed, defaulting to chat'
     };
   }
@@ -185,7 +188,6 @@ async function handleChat(data) {
     if (!aiProvider) {
       await initializeAI();
     }
-
     if (!aiProvider) {
       return {
         success: true,
@@ -193,10 +195,8 @@ async function handleChat(data) {
         provider: 'none'
       };
     }
-
     const messages = data.messages || [{ role: 'user', content: data.message || 'Hello' }];
     const response = await aiProvider.chat(messages);
-
     return {
       success: true,
       message: response.content,
@@ -204,7 +204,6 @@ async function handleChat(data) {
       usage: response.usage
     };
   } catch (error) {
-    console.error('❌ Chat error:', error);
     return {
       success: false,
       error: error.message,
@@ -213,92 +212,85 @@ async function handleChat(data) {
   }
 }
 
+// Handle generic action on page: forward to content-script via tab message
+async function handlePerformAction(intent) {
+  return new Promise((resolve, reject) => {
+    // Find active tab
+    chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
+      if (!tabs || tabs.length === 0) {
+        resolve({ success: false, error: 'No active tab' });
+        return;
+      }
+      const tabId = tabs[0].id;
+      chrome.tabs.sendMessage(tabId, { type: 'PERFORM_PAGE_ACTION', intent: intent }, resp => {
+        if (chrome.runtime.lastError) {
+          resolve({ success: false, error: chrome.runtime.lastError.message });
+        } else {
+          resolve(resp || { success: true });
+        }
+      });
+    });
+  });
+}
+
 // Test connection
 async function testConnection() {
   try {
     if (!aiProvider) {
       await initializeAI();
     }
-
     if (!aiProvider) {
       return { success: false, error: 'AI provider not initialized' };
     }
-
-    const result = await aiProvider.testConnection();
+    await aiProvider.testConnection();
     return { success: true, message: 'Connected to LM Studio', provider: 'local' };
   } catch (error) {
     return { success: false, error: error.message };
   }
 }
 
-// Local AI Provider Class
+// LocalAIProvider as before
 class LocalAIProvider {
   constructor(baseURL = 'http://localhost:1234') {
     this.baseURL = baseURL;
     this.model = 'deepseek-coder-v2-lite-instruct';
   }
-
   async testConnection() {
-    try {
-      const response = await fetch(`${this.baseURL}/v1/models`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      console.log('✅ LM Studio connection successful');
-      return true;
-    } catch (error) {
-      console.error('❌ Connection test failed:', error);
-      throw error;
-    }
+    const response = await fetch(`${this.baseURL}/v1/models`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    return true;
   }
-
   async chat(messages) {
-    try {
-      console.log('🗨️ Sending chat request to LM Studio');
-
-      const response = await fetch(`${this.baseURL}/v1/chat/completions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: this.model,
-          messages: messages,
-          temperature: 0.7,
-          max_tokens: -1,
-          stream: false
-        })
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`LM Studio error ${response.status}: ${errorText}`);
-      }
-
-      const data = await response.json();
-
-      if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-        throw new Error('Invalid response from LM Studio');
-      }
-
-      console.log('✅ LM Studio response received');
-
-      return {
-        content: data.choices[0].message.content,
-        usage: data.usage || { total_tokens: 0 },
-        provider: 'local'
-      };
-    } catch (error) {
-      console.error('❌ Chat request failed:', error);
-      throw error;
+    const response = await fetch(`${this.baseURL}/v1/chat/completions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: this.model,
+        messages: messages,
+        temperature: 0.7,
+        max_tokens: -1,
+        stream: false
+      })
+    });
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`LM Studio error ${response.status}: ${errorText}`);
     }
+    const data = await response.json();
+    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+      throw new Error('Invalid response from LM Studio');
+    }
+    return {
+      content: data.choices[0].message.content,
+      usage: data.usage || { total_tokens: 0 },
+      provider: 'local'
+    };
   }
 }
 
-// Alarm handler
 function handleAlarm(alarm) {
   console.log('⏰ Alarm:', alarm.name);
 }

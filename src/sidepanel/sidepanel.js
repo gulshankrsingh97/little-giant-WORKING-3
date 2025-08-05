@@ -5,93 +5,93 @@ document.addEventListener('DOMContentLoaded', () => {
   const messages = document.getElementById('messages');
   const status = document.getElementById('status-dot');
   document.body.classList.add('dark-mode');
-
-    // Reset to default dot style initially
   status.textContent = '⚪';
-
-
-  // Test debug connection first
-//   testDebugConnection();
 
   sendBtn.addEventListener('click', sendMessage);
   testBtn.addEventListener('click', testConnection);
 
   messageInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      sendMessage();
-    }
+    if (e.key === 'Enter') sendMessage();
   });
 
-async function testDebugConnection() {
-  try {
-    const response = await chrome.runtime.sendMessage({
-      type: 'DEBUG_TEST'
-    });
+  async function sendMessage() {
+    const message = messageInput.value.trim();
+    if (!message) return;
 
-    if (response && response.success) {
-      console.log('✅ Service worker responding:', response.message);
-      status.textContent = '🟢';
-    } else {
-      console.error('❌ Service worker not responding');
-      status.textContent = '🔴';
-    }
-  } catch (error) {
-    console.error('❌ Debug test failed:', error);
-    status.textContent = '🔴';
-  }
-}
+    addMessage('user-message', message);
+    messageInput.value = '';
+    status.textContent = '🟡';
 
+    try {
+      // Step 1: Classify user intent (action)
+      const classificationResponse = await chrome.runtime.sendMessage({
+        type: 'CLASSIFY_INTENT',
+        data: { message: message }
+      });
 
+      if (classificationResponse && classificationResponse.success) {
+        const intent = classificationResponse.intent;
 
-async function sendMessage() {
-  const message = messageInput.value.trim();
-  if (!message) return;
-
-  addMessage('user', message);
-  messageInput.value = '';
-
-  try {
-    // Step 1: Ask AI to classify the intent first
-    const classificationResponse = await chrome.runtime.sendMessage({
-      type: 'CLASSIFY_INTENT',
-      data: { message: message }
-    });
-
-    if (classificationResponse && classificationResponse.success) {
-      const intent = classificationResponse.intent;
-
-      // Step 2: Handle based on AI's classification
-      if (intent.action === 'open_website' && intent.url) {
-        // AI determined this is a website opening request
-        status.textContent = '🟡';
-        chrome.runtime.sendMessage({
-          type: 'OPEN_URL',
-          url: intent.url
-        });
-        addMessage('assistant', `Opening ${intent.url}...`);
-          status.textContent = '🟢';
-        return;
+        // Handle by action type
+        switch (intent.action) {
+          case 'navigate':
+            // Navigate, then optionally perform more actions if value/target are set (defer for now)
+            chrome.runtime.sendMessage({
+              type: 'OPEN_URL',
+              url: intent.url
+            }, async (response) => {
+              addMessage('assistant', `Opening ${intent.url}...`);
+              if (response && response.tabId && (intent.value || intent.target)) {
+                // Ideally, wait for navigation and then send perform-action message
+                // For now, the user should issue a follow-up command when ready
+                // Could enhance with tabUpdate listener for ready state
+              }
+              status.textContent = '🟢';
+            });
+            return;
+          case 'click':
+          case 'type':
+          case 'search':
+          case 'scroll': {
+            // Perform direct page action
+            const actionResponse = await chrome.runtime.sendMessage({
+              type: 'PERFORM_ACTION',
+              data: intent
+            });
+            if (actionResponse.success) {
+              addMessage('assistant', `Action performed: ${intent.action} (${intent.target || ''})`);
+              status.textContent = '🟢';
+            } else {
+              addMessage('assistant', `Action failed: ${actionResponse.error || 'Unknown error'}`);
+              status.textContent = '🔴';
+            }
+            return;
+          }
+          case 'chat':
+          default:
+            // Normal chat fallback
+            break;
+        }
       }
-    }
 
-    // If not a website request, do normal chat
-    const response = await chrome.runtime.sendMessage({
-      type: 'CHAT',
-      data: { message: message }
-    });
+      // Chat as fallback or for action 'chat'
+      const response = await chrome.runtime.sendMessage({
+        type: 'CHAT',
+        data: { message: message }
+      });
 
-    if (response && response.success) {
-      addMessage('assistant', response.message);
-      status.textContent = '🟢';
-    } else {
-      addMessage('error', response?.error || 'Failed to get response');
+      if (response && response.success) {
+        addMessage('assistant', response.message);
+        status.textContent = '🟢';
+      } else {
+        addMessage('error', response?.error || 'Failed to get response');
+        status.textContent = '🔴';
+      }
+    } catch (error) {
+      addMessage('error', `Connection error: ${error.message}`);
       status.textContent = '🔴';
     }
-  } catch (error) {
-    addMessage('error', `Connection error: ${error.message}`);
-    status.textContent = '🔴';
   }
-}
 
   async function testConnection() {
     const originalText = testBtn.textContent;
@@ -103,30 +103,24 @@ async function sendMessage() {
       });
 
       if (response && response.success) {
-        status.textContent = '🟡';
+        status.textContent = '🟢';
       } else {
-        status.textContent = '🟢';  
+        status.textContent = '🔴';
       }
     } catch (error) {
-        status.textContent = '🔴';
+      status.textContent = '🔴';
     }
-
     setTimeout(() => {
       testBtn.textContent = originalText;
-        status.textContent = '🔴';
+      status.textContent = '⚪';
     }, 3000);
   }
 
-  function addMessage(role, content) {
+  function addMessage(cls, content) {
     const messageDiv = document.createElement('div');
-    messageDiv.className = `message ${role}`;
-    messageDiv.textContent = content;
+    messageDiv.className = `message ${cls}`;
     messageDiv.innerHTML = content.replace(/\n/g, '<br>');
     messages.appendChild(messageDiv);
-
-    // Auto-scroll
     messages.scrollTo({ top: messages.scrollHeight, behavior: 'smooth' });
-    // messages.appendChild(messageDiv);
-    // messages.scrollTop = messages.scrollHeight;
   }
 });

@@ -1,31 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>A.A.S.A</title>
-  <link rel="stylesheet" href="sidepanel.css" />
+  <link rel="stylesheet" href="sidepanel.css">
 </head>
-<body>
+<body class="dark-mode">
   <header>
-    <h2>Agentic AI Surfing Assistant</h2>
+    <h2>A.A.S.A <span id="status-dot">⚪</span></h2>
     <div class="header-buttons">
-      <button id="testBtn" title="Test AI connection">
-        Connection<span id="status-dot"></span>
-      </button>
+      <button id="testBtn" title="Test Connection">🔌</button>
     </div>
   </header>
-
   <main id="main-content">
-    <!-- Chat conversation view (visible by default) -->
-    <div id="chat-view" class="chat-view">
-        <div id="messages"></div>
+    <div class="chat-view">
+      <div id="messages"></div>
+      <div id="inputbar">
+        <input id="messageInput" type="text" placeholder="Type your message..." autocomplete="off">
+        <button id="sendBtn">Send</button>
+      </div>
     </div>
-    <!-- History view (hidden by default) -->
-    <div id="history-view" class="history-view" style="display:none;"></div>
   </main>
-
-<input type="text" id="messageInput" placeholder="Type a message…" autocomplete="on" />
-<button id="sendBtn">Send</button>
   <script src="sidepanel.js"></script>
 </body>
 </html>
