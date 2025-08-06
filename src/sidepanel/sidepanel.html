@@ -2,34 +2,88 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
-  <title>A.A.S.A</title>
-  <link rel="stylesheet" href="sidepanel.css">
+    <meta charset="UTF-8">
+    <title>A.A.S.A</title>
+    <link rel="stylesheet" href="sidepanel.css">
 </head>
 
 <body class="dark-mode">
-  <header>
-    <h2>A.A.S.A <span id="status-dot">⚪</span></h2>
-    <div class="header-buttons">
-      <button id="testBtn" title="Test AI connection">
-        Connection<span id="status-dot"></span>
-      </button>
-      <button id="summarizeBtn" title="Summarize current tab">
-        Summarize
-      </button>
+    <header>
+        <h2>LITTLE GAINT<span id="status-dot"></span></h2>
+        <div class="header-buttons">
+            <button id="settingsBtn" title="Settings">
+                Settings ⚙️
+            </button>
+        </div>
+    </header>
+    <main id="main-content">
+        <div class="chat-view">
+            <div id="messages"></div>
+            <div class="footer-buttons">
+                <button id="summarizeBtn" title="Summarize current tab">
+                    Summarize ✨
+                </button>
+                <button id="historyBtn" title="Chat History">
+                    History 🕘
+                </button>
+                <div id="history-panel" class="history-view" style="display: none;">
+                    <div class="history-header">
+                        <span>History 🕘</span>
+                        <div class="history-header-actions">
+                            <button id="backToChatBtn" title="Back to chat">⬅️</button>
+                            <button id="clearHistoryBtn" title="Clear history">🗑️</button>
+                        </div>
+                    </div>
+                    <ul id="historyList"></ul>
+                </div>
+<!-- Settings panel (hidden by default) -->
+<div id="settings-panel" class="settings-view" style="display: none;">
+<div class="settings-header">
+  <span>⚙️ Settings</span>
+  <button id="closeSettingsBtn" title="Close settings">✖</button>
+</div>
 
-    </div>
-  </header>
-  <main id="main-content">
-    <div class="chat-view">
-      <div id="messages"></div>
-      <div id="inputbar">
-        <input id="messageInput" type="text" placeholder="Type your message..." autocomplete="off">
-        <button id="sendBtn">Send</button>
-      </div>
-    </div>
-  </main>
-  <script src="sidepanel.js"></script>
+
+  <!-- Dark Mode Toggle -->
+  <div class="toggle-wrapper">
+    <span class="toggle-label">🌙 Dark Mode</span>
+    <label class="toggle-switch">
+      <input type="checkbox" id="darkModeToggle">
+      <span class="slider"></span>
+    </label>
+  </div>
+
+  <!-- Model Select -->
+  <div class="select-wrapper">
+    <label for="modelSelect">🧠 AI Model</label>
+    <select id="modelSelect">
+      <option value="DeepSeek R1">DeepSeek R1</option>
+    </select>
+  </div>
+
+  <!-- Test Button -->
+  <button id="testConnectionBtn" class="test-connection-btn">Test Connection</button>
+</div>
+
+
+
+
+
+            </div>
+            <div id="quick-actions">
+                <button class="quick-btn" data-tag="#videos"> Videos 🎥</button>
+                <button class="quick-btn" data-tag="#images"> Photos 📸</button>
+                <button class="quick-btn" data-tag="#websearch"> Web Search 🌐</button>
+                <button class="quick-btn" data-tag="#music"> Music 🎵</button>
+            </div>
+            <div id="inputbar">
+                <textarea id="messageInput" placeholder="Type your message..." rows="1"></textarea>
+                <button id="sendBtn">Send</button>
+            </div>
+        </div>
+    </main>
+    <script type="module" src="sidepanel.js"></script>
+
 </body>
 
 </html>

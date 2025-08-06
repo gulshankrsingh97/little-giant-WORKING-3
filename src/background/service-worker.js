@@ -1,4 +1,5 @@
 import { summarizePage } from './summarizer.js';
+import { saveHistory, getHistory, clearHistory } from './history.js';
 
 // Little Giant AI - WORKING Service Worker
 console.log('🏔️ Service Worker Started');
@@ -117,6 +118,27 @@ function handleMessage(message, sender, sendResponse) {
      summarizePage(message.data, aiProvider)
     .then(result => sendResponse(result))
     .catch(error => sendResponse({ success: false, error: error.message }));
+     return true;
+
+    case 'SAVE_HISTORY':
+     if (message.data?.text) {
+       saveHistory(message.data.text);
+       sendResponse({ success: true });
+     } else {
+       sendResponse({ success: false, error: 'No text provided' });
+     }
+     return true;
+
+    case 'GET_HISTORY':
+     getHistory((list) => {
+       sendResponse({ success: true, data: list });
+     });
+     return true;
+
+    case 'CLEAR_HISTORY':
+     clearHistory(() => {
+       sendResponse({ success: true });
+     });
      return true;
 
 
