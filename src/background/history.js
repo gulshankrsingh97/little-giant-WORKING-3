@@ -1,30 +1,27 @@
-// src/background/history.js
+// history.js — minimal, safe patch
+const CHAT_HISTORY_KEY = 'chatHistory';
 
-const STORAGE_KEY = 'chatHistory';
-
-// Save a message to local history
-export function saveHistory(message) {
-  if (!message) return;
-  chrome.storage.local.get([STORAGE_KEY], (result) => {
-    const list = result[STORAGE_KEY] || [];
-    list.push({
-      text: message,
-      timestamp: Date.now()
-    });
-    chrome.storage.local.set({ [STORAGE_KEY]: list });
+export function saveHistory(entry, cb = () => {}) {
+  chrome.storage.local.get([CHAT_HISTORY_KEY], (res) => {
+    const arr = Array.isArray(res[CHAT_HISTORY_KEY]) ? res[CHAT_HISTORY_KEY] : [];
+    // normalize: support strings or {role, content}
+    const item = (typeof entry === 'string')
+      ? { role: 'user', content: entry }
+      : entry && entry.role && entry.content
+        ? entry
+        : null;
+    if (item) arr.push(item);
+    chrome.storage.local.set({ [CHAT_HISTORY_KEY]: arr }, cb);
   });
 }
 
-// Fetch all saved history items
-export function getHistory(callback) {
-  chrome.storage.local.get([STORAGE_KEY], (result) => {
-    callback(result[STORAGE_KEY] || []);
+export function getHistory(cb) {
+  chrome.storage.local.get([CHAT_HISTORY_KEY], (res) => {
+    const arr = Array.isArray(res[CHAT_HISTORY_KEY]) ? res[CHAT_HISTORY_KEY] : [];
+    cb(arr.filter(m => m && m.role && typeof m.content === 'string'));
   });
 }
 
-// Clear entire chat history
-export function clearHistory(callback) {
-  chrome.storage.local.remove([STORAGE_KEY], () => {
-    if (callback) callback();
-  });
+export function clearHistory(cb = () => {}) {
+  chrome.storage.local.remove(CHAT_HISTORY_KEY, cb);
 }

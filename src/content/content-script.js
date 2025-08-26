@@ -39,7 +39,7 @@ class LittleGiantContentActions {
         case 'search':
           return this.handleType(intent.target, intent.value);
         case 'scroll':
-          return this.handleScroll(intent.target);
+          return this.handleScroll(intent.target, intent.value);
         // No action needed for "navigate" or "chat"
         default:
           return { success: true, message: 'No page action needed' };
@@ -49,21 +49,37 @@ class LittleGiantContentActions {
     }
   }
 
-  handleClick(targetDesc) {
-    // Try to find a button/link by text
-    let el = null;
-    if (targetDesc) {
-      el = [...document.querySelectorAll('button,input[type=button],a')]
-        .find(e => e.textContent.trim().toLowerCase().includes(targetDesc.toLowerCase())
-          || (e.value && e.value.toLowerCase().includes(targetDesc.toLowerCase())));
-    }
-    if (el) {
-      el.click();
-      return { success: true, message: 'Clicked element: ' + targetDesc };
-    } else {
-      return { success: false, error: `Could not find element to click: ${targetDesc}` };
-    }
+handleClick(targetDesc) {
+  if (!targetDesc) {
+    return { success: false, error: 'No target description provided' };
   }
+
+  targetDesc = targetDesc.toLowerCase();
+  let el = null;
+
+  // Look for common clickable elements
+  const candidates = [
+    ...document.querySelectorAll(
+      'button, input[type=button], input[type=submit], a, [role=button]'
+    )
+  ];
+
+  el = candidates.find(e =>
+    (e.textContent && e.textContent.trim().toLowerCase().includes(targetDesc)) ||
+    (e.value && e.value.toLowerCase().includes(targetDesc)) ||
+    (e.getAttribute('aria-label') && e.getAttribute('aria-label').toLowerCase().includes(targetDesc)) ||
+    (e.getAttribute('title') && e.getAttribute('title').toLowerCase().includes(targetDesc)) ||
+    (e.name && e.name.toLowerCase().includes(targetDesc))
+  );
+
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.click();
+    return { success: true, message: 'Clicked element: ' + targetDesc };
+  } else {
+    return { success: false, error: `Could not find element to click: ${targetDesc}` };
+  }
+}
 
   handleType(targetDesc, value) {
     // Try to find input/textarea by label/placeholder or text
@@ -91,29 +107,41 @@ class LittleGiantContentActions {
     }
   }
 
-  handleScroll(targetDesc) {
-    if (!targetDesc) {
-      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-      return { success: true, message: 'Scrolled to bottom' };
-    }
-    if (targetDesc.toLowerCase().includes('top')) {
+  handleScroll(targetDesc, direction) {
+  // Wait a moment for DOM to be ready
+  setTimeout(() => {
+    const dir = (direction || '').toLowerCase();
+    const step = Math.max(200, Math.floor(window.innerHeight * 0.9));
+
+    console.log('🔄 Attempting scroll:', dir, 'Step size:', step);
+    console.log('📏 Page dimensions:', {
+      scrollHeight: document.body.scrollHeight,
+      clientHeight: document.documentElement.clientHeight,
+      currentScrollY: window.scrollY
+    });
+
+    if (dir.includes('top')) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      return { success: true, message: 'Scrolled to top' };
-    } else if (targetDesc.toLowerCase().includes('bottom')) {
+      console.log('✅ Scrolled to top');
+    } else if (dir.includes('bottom') || dir.includes('end')) {
       window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-      return { success: true, message: 'Scrolled to bottom' };
+      console.log('✅ Scrolled to bottom');
+    } else if (dir.includes('up')) {
+      window.scrollBy({ top: -step, behavior: 'smooth' });
+      console.log('✅ Scrolled up by', step);
+    } else if (dir.includes('down')) {
+      window.scrollBy({ top: step, behavior: 'smooth' });
+      console.log('✅ Scrolled down by', step);
     } else {
-      let el = [...document.querySelectorAll('*')]
-        .find(e => e.textContent.trim().toLowerCase().includes(targetDesc.toLowerCase()));
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth' });
-        return { success: true, message: 'Scrolled to element' };
-      } else {
-        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-        return { success: false, error: 'Could not find target element to scroll, scrolled to bottom instead' };
-      }
+      // Default to bottom
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+      console.log('✅ Default scroll to bottom');
     }
-  }
+  }, 100); // Small delay to ensure DOM is ready
+
+  return { success: true, message: `Scroll initiated: ${direction || 'bottom'}` };
+}
+
 
   // Retain previous capability for basics
   getPageInfo() {
